@@ -2,15 +2,20 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:game_tracker/core/error/failures.dart';
 import 'package:game_tracker/features/auth/data/mappers/user_mapper.dart';
+import 'package:game_tracker/features/auth/domain/auth_repository.dart';
 import 'package:game_tracker/features/auth/domain/entities/app_user.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-
-import '../../domain/auth_repository.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
   FirebaseAuthRepository(this._auth, this._googleSignIn);
+
+  @override
+  AppUser? get currentUser {
+    final user = _auth.currentUser;
+    return user?.toEntity();
+  }
 
   @override
   Stream<AppUser?> get authStateChanges {
