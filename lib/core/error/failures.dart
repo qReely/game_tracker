@@ -10,3 +10,7 @@ class AuthFailure extends Failure {
 class NetworkFailure extends Failure {
   NetworkFailure() : super("Check your internet connection.");
 }
+
+class GamesLoadingFailure extends Failure {
+  GamesLoadingFailure() : super("Failed to load games.");
+}

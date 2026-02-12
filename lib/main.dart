@@ -4,7 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_tracker/core/di/injection_container.dart' as di;
 import 'package:game_tracker/features/auth/domain/auth_repository.dart';
 import 'package:game_tracker/features/auth/presentation/bloc/login_bloc.dart';
-import 'package:game_tracker/features/auth/presentation/pages/home_page.dart';
+import 'package:game_tracker/features/games/presentation/pages/home_page.dart';
 import 'package:game_tracker/features/auth/presentation/pages/login_page.dart';
 
 import 'firebase_options.dart';
