@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:game_tracker/features/games/presentation/widgets/game_block_header.dart';
-import 'package:game_tracker/features/games/presentation/widgets/game_media_gallery_item.dart';
+import 'package:game_tracker/features/games/presentation/widgets/game_details/game_block_header.dart';
+import 'package:game_tracker/features/games/presentation/widgets/game_details/game_media_gallery_item.dart';
 
 class GameMediaGallery extends StatelessWidget {
   final List<String> screenshots;
@@ -21,7 +21,7 @@ class GameMediaGallery extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: screenshots.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            separatorBuilder: (_, _) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               return GestureDetector(
                 onTap: () => _showImageViewer(context, index),

@@ -1,7 +1,7 @@
 import 'package:game_tracker/features/library/domain/entities/library_item.dart';
 
 class LibraryItemModel extends LibraryItem {
-  LibraryItemModel({
+  const LibraryItemModel({
     required super.gameId,
     required super.gameName,
     super.posterPath,

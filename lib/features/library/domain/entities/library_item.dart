@@ -34,7 +34,7 @@ class LibraryItem extends Equatable {
   final String? privateNote; // The "Self Note"
   final DateTime addedAt;
 
-  LibraryItem({
+  const LibraryItem({
     required this.gameId,
     required this.gameName,
     this.posterPath,

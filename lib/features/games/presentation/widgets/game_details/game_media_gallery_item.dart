@@ -31,20 +31,6 @@ class _MediaGalleryItemState extends State<MediaGalleryItem> {
     super.dispose();
   }
 
-  void _handlePointerDown(PointerDownEvent event) {
-    _pointerCount++;
-    if (_pointerCount >= 2) widget.onZoomChanged(true);
-  }
-
-  void _handlePointerUp(PointerUpEvent event) {
-    _pointerCount--;
-    if (_pointerCount < 2) {
-      // Check if we are still zoomed in via scale even if fingers are off
-      final double scale = _transformationController.value.getMaxScaleOnAxis();
-      if (scale <= 1.0) widget.onZoomChanged(false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Listener(

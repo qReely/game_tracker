@@ -7,6 +7,7 @@ abstract class LibraryLocalDataSource {
   Future<LocalLibraryItem?> getItem(int gameId);
 
   Future<void> deleteItem(int gameId);
+  Future<List<LocalLibraryItem>> getAllItems();
 }
 
 class LibraryLocalDataSourceImpl implements LibraryLocalDataSource {
@@ -31,5 +32,10 @@ class LibraryLocalDataSourceImpl implements LibraryLocalDataSource {
   @override
   Future<void> deleteItem(int gameId) async {
     await isar.writeTxn(() => isar.localLibraryItems.filter().gameIdEqualTo(gameId).deleteAll());
+  }
+
+  @override
+  Future<List<LocalLibraryItem>> getAllItems() async {
+    return isar.localLibraryItems.where().findAll();
   }
 }

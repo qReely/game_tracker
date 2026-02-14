@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:game_tracker/features/games/domain/entities/game_detail_entity.dart';
-import 'package:game_tracker/features/games/presentation/widgets/game_block_header.dart';
+import 'package:game_tracker/features/games/presentation/widgets/game_details/game_block_header.dart';
 
 class GameInfoBlock extends StatelessWidget {
   final GameDetailEntity game;

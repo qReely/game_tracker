@@ -50,7 +50,8 @@ class LibraryGameCard extends StatelessWidget {
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withOpacity(0.9)],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.9)],
+                    stops: const [0.6, 1.0],
                   ),
                 ),
                 child: Column(

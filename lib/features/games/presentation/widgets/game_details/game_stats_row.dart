@@ -33,7 +33,7 @@ class GameStatsRow extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: color.withOpacity(0.3), width: 2),
+            border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
           ),
           child: Text(value, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 16)),
         ),

@@ -7,6 +7,8 @@ import 'package:game_tracker/core/router/app_router.dart';
 import 'package:game_tracker/features/auth/presentation/bloc/login_bloc.dart';
 import 'package:game_tracker/features/library/presentation/bloc/library_bloc.dart';
 import 'package:game_tracker/features/library/presentation/bloc/library_event.dart';
+import 'package:game_tracker/core/theme/app_theme.dart';
+import 'package:game_tracker/core/utils/ui_scaler.dart';
 
 import 'firebase_options.dart';
 
@@ -30,10 +32,15 @@ class MyApp extends StatelessWidget {
         BlocProvider(create: (_) => sl<LibraryBloc>()..add(WatchLibrary())), // Provide globally
         BlocProvider(create: (_) => sl<LoginBloc>()),
       ],
-      child: MaterialApp.router(
-        routerConfig: AppRouter.router,
-        title: 'Game Tracker',
-        theme: ThemeData.dark(),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          UiScaler.init(context);
+          return MaterialApp.router(
+            routerConfig: AppRouter.router,
+            title: 'Game Tracker',
+            theme: AppTheme.darkTheme,
+          );
+        },
       ),
     );
   }

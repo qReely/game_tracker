@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:game_tracker/core/di/injection_container.dart';
-import 'package:game_tracker/features/auth/domain/auth_repository.dart';
+import 'package:game_tracker/core/theme/app_colors.dart';
+import 'package:game_tracker/core/theme/dimens.dart';
+import 'package:game_tracker/core/utils/ui_scaler.dart';
 import 'package:game_tracker/features/library/data/models/library_view_model.dart';
 import 'package:game_tracker/features/library/domain/entities/library_item.dart';
 import 'package:game_tracker/features/library/presentation/bloc/library_bloc.dart';
@@ -24,21 +25,12 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF050B18),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("My Library"),
         backgroundColor: Colors.transparent,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout_outlined),
-            onPressed: () {
-              sl<AuthRepository>().signOut();
-            }
-          ),
-        ],
       ),
       body: StreamBuilder<LibraryViewModel>(
-        // Combine the streams of the LibraryBloc and LibraryFilterCubit
         stream: Rx.combineLatest2<LibraryState, LibraryFilterState, LibraryViewModel>(
           context.read<LibraryBloc>().stream.startWith(context.read<LibraryBloc>().state),
           context.read<LibraryFilterCubit>().stream.startWith(context.read<LibraryFilterCubit>().state),
@@ -60,7 +52,7 @@ class _LibraryPageState extends State<LibraryPage> {
           final viewModel = snapshot.data;
 
           if (viewModel == null || context.read<LibraryBloc>().state is LibraryLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
           }
 
           return Column(
@@ -68,7 +60,7 @@ class _LibraryPageState extends State<LibraryPage> {
               // Filter Bar
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.symmetric(horizontal: Dimens.md.w, vertical: Dimens.sm.h),
                 child: Row(
                   children: [
                     _buildFilterChip(context, null, "ALL", viewModel.activeFilter),
@@ -81,14 +73,14 @@ class _LibraryPageState extends State<LibraryPage> {
               // Library Grid
               Expanded(
                 child: viewModel.items.isEmpty
-                    ? const Center(child: Text("No games found here.", style: TextStyle(color: Colors.grey)))
+                    ? Center(child: Text("No games found here.", style: Theme.of(context).textTheme.bodyLarge))
                     : GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  padding: EdgeInsets.all(Dimens.md.w),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 0.7,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
+                    crossAxisSpacing: Dimens.md.w,
+                    mainAxisSpacing: Dimens.md.h,
                   ),
                   itemCount: viewModel.items.length,
                   itemBuilder: (context, index) =>
@@ -105,13 +97,16 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget _buildFilterChip(BuildContext context, GameStatus? status, String label, GameStatus? activeFilter) {
     final isSelected = activeFilter == status;
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: EdgeInsets.only(right: Dimens.sm.w),
       child: FilterChip(
-        label: Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.grey, fontSize: 12)),
+        label: Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: isSelected ? Colors.white : AppColors.textSecondary, 
+          fontWeight: FontWeight.bold
+        )),
         selected: isSelected,
         onSelected: (_) => context.read<LibraryFilterCubit>().setStatus(status),
-        backgroundColor: const Color(0xFF1F2430),
-        selectedColor: status?.color.withOpacity(0.3) ?? Colors.blueAccent.withOpacity(0.3),
+        backgroundColor: AppColors.surface,
+        selectedColor: status?.color.withValues(alpha: 0.3) ?? AppColors.primary.withValues(alpha: 0.3),
         checkmarkColor: Colors.white,
         shape: StadiumBorder(side: BorderSide(color: isSelected ? Colors.white24 : Colors.transparent)),
       ),
