@@ -1,3 +1,5 @@
 abstract class GameEvent {}
 
-class FetchTrendingGames extends GameEvent {}
+class FetchGames extends GameEvent {}
+
+class LoadMoreGames extends GameEvent {}

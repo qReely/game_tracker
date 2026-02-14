@@ -8,7 +8,15 @@ class GamesLoading extends GameState {}
 
 class GamesLoaded extends GameState {
   List<GameEntity> games;
-  GamesLoaded(this.games);
+  bool hasReachedMax;
+  GamesLoaded({required this.games, required this.hasReachedMax});
+
+  GameState copyWith({required bool hasReachedMax}) {
+    return GamesLoaded(
+      games: games,
+      hasReachedMax: hasReachedMax,
+    );
+  }
 }
 
 class GamesError extends GameState {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:game_tracker/features/games/presentation/widgets/game_block_header.dart';
+import 'package:game_tracker/features/games/presentation/widgets/game_details/game_block_header.dart';
 
 class GameAboutBlock extends StatefulWidget {
   final String description;
