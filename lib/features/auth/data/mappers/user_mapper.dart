@@ -8,6 +8,7 @@ extension FirebaseUserX on firebase.User {
       email: email ?? '',
       displayName: displayName,
       photoUrl: photoURL,
+      isAnonymous: isAnonymous,
     );
   }
 }

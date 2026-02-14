@@ -17,6 +17,7 @@ import 'package:game_tracker/features/games/presentation/bloc/discovery/discover
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_filter_cubit.dart';
 import 'package:game_tracker/features/games/presentation/bloc/game_bloc.dart';
 import 'package:game_tracker/features/library/data/datasources/library_local_data_source.dart';
+import 'package:game_tracker/features/profile/presentation/bloc/profile_bloc.dart';
 import 'package:game_tracker/features/library/data/models/local_library_item.dart';
 import 'package:game_tracker/features/library/data/repositories/library_repository_impl.dart';
 import 'package:game_tracker/features/library/domain/library_repository.dart';
@@ -61,8 +62,10 @@ Future<void> init() async {
 
   // BLoC (Using registerFactory for BLoCs, to get a fresh one per screen)
   sl.registerFactory(() => LoginBloc(sl()));
+  sl.registerFactory(() => ProfileBloc(sl(), sl()));
   sl.registerFactory(() => GameBloc(sl()));
   sl.registerFactory(() => GameDetailsBloc(sl()));
+  sl.registerFactory(() => LibraryFilterCubit());
   sl.registerFactory(() => LibraryBloc(sl()));
   sl.registerLazySingleton(() => DiscoveryFilterCubit());
   sl.registerFactory(() => DiscoveryBloc(repository: sl(), filterCubit: sl()));

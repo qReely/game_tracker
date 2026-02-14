@@ -23,5 +23,16 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         emit(LoginFailure(e.message));
       }
     });
+
+    on<AnonymousSignInRequested>((event, emit) async {
+      if (state is LoginLoading) return;
+      emit(LoginLoading());
+      try {
+        await _authRepository.signInAnonymously();
+        emit(LoginSuccess());
+      } on AuthFailure catch (e) {
+        emit(LoginFailure(e.message));
+      }
+    });
   }
 }

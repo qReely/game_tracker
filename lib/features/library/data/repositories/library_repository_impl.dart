@@ -20,10 +20,10 @@ class LibraryRepositoryImpl implements LibraryRepository {
 
   @override
   Future<void> addToLibrary(LibraryItem item) async {
-    if (_uid.isEmpty) return;
-
     // 1. Local Cache (Immediate)
     await _localDataSource.saveItem(LocalLibraryItem.fromEntity(item));
+
+    if (_uid.isEmpty || _authRepository.currentUser?.isAnonymous == true) return;
 
     // 2. Firestore Sync
     final docRef = _firestore.collection('users').doc(_uid).collection('library').doc(item.gameId.toString());
@@ -77,7 +77,7 @@ class LibraryRepositoryImpl implements LibraryRepository {
     final userId = _authRepository.currentUser?.id;
     if (userId == null) return;
 
-    if (_uid.isNotEmpty) {
+    if (_uid.isNotEmpty && _authRepository.currentUser?.isAnonymous == false) {
       await _firestore
         .collection('users')
         .doc(_uid)
@@ -109,7 +109,9 @@ class LibraryRepositoryImpl implements LibraryRepository {
         .delete();
 
     // 3. Delete the main game document
-    await gameDocRef.delete();
+    if (_authRepository.currentUser?.isAnonymous == false) {
+       await gameDocRef.delete();
+    }
   }
 
 
@@ -126,6 +128,8 @@ class LibraryRepositoryImpl implements LibraryRepository {
     }
 
     // 2. Update Firestore
+    if (_authRepository.currentUser?.isAnonymous == true) return;
+    
     await _firestore
       .collection('users')
       .doc(userId)
@@ -153,11 +157,51 @@ class LibraryRepositoryImpl implements LibraryRepository {
     }
 
     // 2. Update Firestore
+    if (_authRepository.currentUser?.isAnonymous == true) return;
+    
     await _firestore
         .collection('users')
         .doc(_uid)
         .collection('library')
         .doc(gameId.toString())
         .update({'userRating': rating});
+  }
+
+
+  @override
+  Future<void> syncLocalToRemote() async {
+    final user = _authRepository.currentUser;
+    if (user == null || user.isAnonymous) return;
+
+    final localItems = await _localDataSource.getAllItems();
+    if (localItems.isEmpty) return;
+
+    final batch = _firestore.batch();
+    final userLibraryRef = _firestore.collection('users').doc(user.id).collection('library');
+
+    for (var item in localItems) {
+      final docRef = userLibraryRef.doc(item.gameId.toString());
+      
+      batch.set(docRef, {
+        'gameId': item.gameId,
+        'gameName': item.gameName,
+        'posterPath': item.posterPath,
+        'status': item.status.name,
+        'userRating': item.userRating,
+        'privateNote': item.privateNote, // Note: Simplification for sync, ideally privateNote goes to subcollection
+        'addedAt': FieldValue.serverTimestamp(), // Use server timestamp to avoid clock skew
+      });
+
+      // Also sync private note to restricted if it exists
+      if (item.privateNote != null && item.privateNote!.isNotEmpty) {
+        final restrictedRef = docRef.collection('restricted').doc('private_data');
+        batch.set(restrictedRef, {
+          'privateNote': item.privateNote,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+      }
+    }
+
+    await batch.commit();
   }
 }

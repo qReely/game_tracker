@@ -7,6 +7,7 @@ abstract class LibraryRepository {
   Future<void> updatePrivateNote(int gameId, String note);
   Future<void> removeFromLibrary(int gameId);
   Future<void> updateUserRating(int gameId, double rating);
+  Future<void> syncLocalToRemote();
 
 
   // Public/Social Actions
