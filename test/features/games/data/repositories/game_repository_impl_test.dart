@@ -62,7 +62,7 @@ void main() {
       when(() => mockLocalDataSource.getGames()).thenAnswer((_) async => []);
 
       // Act & Assert
-      expect(() => repository.getTrendingGames(), throwsA(isA<GamesLoadingFailure>()));
+      expect(repository.getTrendingGames(), throwsA(isA<GamesLoadingFailure>()));
     });
   });
 }

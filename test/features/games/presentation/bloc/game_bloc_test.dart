@@ -11,38 +11,65 @@ import 'package:mocktail/mocktail.dart';
 class MockGameRepository extends Mock implements GameRepository {}
 
 void main() {
-  late MockGameRepository mockRepo;
+  late GameBloc bloc;
+  late MockGameRepository mockRepository;
 
   setUp(() {
-    mockRepo = MockGameRepository();
+    mockRepository = MockGameRepository();
+    bloc = GameBloc(mockRepository);
   });
 
+  tearDown(() {
+    bloc.close();
+  });
+
+  const tGame = GameEntity(id: 1, name: 'Game 1', rating: 4.5);
+  const tGame2 = GameEntity(id: 2, name: 'Game 2', rating: 4.0);
+
   group('GameBloc', () {
-    const tGame = GameEntity(id: 1, name: "Test", rating: 4.5);
+    test('initial state should be GamesInitial', () {
+      expect(bloc.state, isA<GamesInitial>());
+    });
 
     blocTest<GameBloc, GameState>(
-      'emits [GamesLoading, GamesLoaded] when successful',
+      'emits [GamesLoading, GamesLoaded] when FetchGames is successful',
       build: () {
-        when(() => mockRepo.getTrendingGames()).thenAnswer((_) async => [tGame]);
-        return GameBloc(mockRepo);
+        when(() => mockRepository.getTrendingGames(page: any(named: 'page')))
+            .thenAnswer((_) async => [tGame]);
+        return bloc;
       },
-      act: (bloc) => bloc.add(FetchTrendingGames()),
+      act: (bloc) => bloc.add(FetchGames()),
       expect: () => [
         isA<GamesLoading>(),
-        isA<GamesLoaded>(),
+        isA<GamesLoaded>().having((s) => s.games, 'games', [tGame]),
       ],
     );
 
     blocTest<GameBloc, GameState>(
-      'emits [GamesLoading, GamesError] when failure occurs',
+      'emits [GamesLoading, GamesError] when FetchGames fails',
       build: () {
-        when(() => mockRepo.getTrendingGames()).thenThrow(GamesLoadingFailure());
-        return GameBloc(mockRepo);
+        when(() => mockRepository.getTrendingGames(page: any(named: 'page')))
+            .thenThrow(GamesLoadingFailure());
+        return bloc;
       },
-      act: (bloc) => bloc.add(FetchTrendingGames()),
+      act: (bloc) => bloc.add(FetchGames()),
       expect: () => [
         isA<GamesLoading>(),
         isA<GamesError>(),
+      ],
+    );
+
+    blocTest<GameBloc, GameState>(
+      'emits updated GamesLoaded when LoadMoreGames is successful',
+      build: () {
+        when(() => mockRepository.getTrendingGames(page: 2))
+            .thenAnswer((_) async => [tGame2]);
+        return bloc;
+      },
+      seed: () => GamesLoaded(games: [tGame], hasReachedMax: false),
+      act: (bloc) => bloc.add(LoadMoreGames()),
+      expect: () => [
+        isA<GamesLoaded>().having((s) => s.games, 'games', [tGame, tGame2]),
       ],
     );
   });

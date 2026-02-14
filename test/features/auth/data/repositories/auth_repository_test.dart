@@ -49,6 +49,7 @@ void main() {
       when(() => mockUserCredential.user).thenReturn(mockFirebaseUser);
       when(() => mockFirebaseUser.uid).thenReturn('123');
       when(() => mockFirebaseUser.email).thenReturn('test@game.com');
+      when(() => mockFirebaseUser.isAnonymous).thenReturn(false);
 
       final result = await repository.signInWithGoogle();
 
@@ -135,6 +136,111 @@ void main() {
 
       verify(() => mockGoogleSignIn.signOut()).called(1);
       verify(() => mockAuth.signOut()).called(1);
+    });
+  });
+
+  group('signInAnonymously', () {
+    test('should return AppUser when anonymous sign-in is successful', () async {
+      final mockUserCredential = MockUserCredential();
+      final mockFirebaseUser = MockUser();
+
+      when(() => mockAuth.signInAnonymously())
+          .thenAnswer((_) async => mockUserCredential);
+      when(() => mockUserCredential.user).thenReturn(mockFirebaseUser);
+      when(() => mockFirebaseUser.uid).thenReturn('guest-123');
+      when(() => mockFirebaseUser.email).thenReturn(null);
+      when(() => mockFirebaseUser.isAnonymous).thenReturn(true);
+
+      final result = await repository.signInAnonymously();
+
+      expect(result.id, 'guest-123');
+      expect(result.isAnonymous, true);
+      verify(() => mockAuth.signInAnonymously()).called(1);
+    });
+
+    test('should throw AuthFailure on FirebaseAuthException', () async {
+      when(() => mockAuth.signInAnonymously())
+          .thenThrow(FirebaseAuthException(code: 'operation-not-allowed'));
+
+      await expectLater(
+        () => repository.signInAnonymously(),
+        throwsA(isA<AuthFailure>()),
+      );
+    });
+  });
+
+  group('linkGoogleAccount', () {
+    late MockUser mockCurrentUser;
+    late MockGoogleSignInAccount mockGoogleAccount;
+    late MockGoogleSignInAuthentication mockGoogleAuth;
+    late MockUserCredential mockUserCredential;
+
+    setUp(() {
+      mockCurrentUser = MockUser();
+      mockGoogleAccount = MockGoogleSignInAccount();
+      mockGoogleAuth = MockGoogleSignInAuthentication();
+      mockUserCredential = MockUserCredential();
+
+      when(() => mockAuth.currentUser).thenReturn(mockCurrentUser);
+      when(() => mockGoogleSignIn.supportsAuthenticate()).thenReturn(true);
+      when(() => mockGoogleSignIn.authenticate())
+          .thenAnswer((_) async => mockGoogleAccount);
+      when(() => mockGoogleAccount.authentication)
+          .thenReturn(mockGoogleAuth);
+      when(() => mockGoogleAuth.idToken).thenReturn('fake-id-token');
+    });
+
+    test('should successfully link account when no errors occur', () async {
+      when(() => mockUserCredential.user).thenReturn(mockCurrentUser);
+      when(() => mockCurrentUser.uid).thenReturn('123');
+      when(() => mockCurrentUser.email).thenReturn('test@me.com');
+      when(() => mockCurrentUser.isAnonymous).thenReturn(false);
+
+      when(() => mockCurrentUser.linkWithCredential(any()))
+          .thenAnswer((_) async => mockUserCredential);
+
+      await repository.linkGoogleAccount();
+
+      verify(() => mockCurrentUser.linkWithCredential(any())).called(1);
+    });
+
+    test('should fallback to sign-in when credential-already-in-use occurs', () async {
+      // 1. linkWithCredential fails with 'credential-already-in-use'
+      when(() => mockCurrentUser.linkWithCredential(any()))
+          .thenThrow(FirebaseAuthException(code: 'credential-already-in-use'));
+      
+      // 2. Mock signOut and signInWithCredential
+      when(() => mockAuth.signOut()).thenAnswer((_) async {});
+      when(() => mockAuth.signInWithCredential(any()))
+          .thenAnswer((_) async => mockUserCredential);
+      when(() => mockUserCredential.user).thenReturn(mockCurrentUser);
+      when(() => mockCurrentUser.uid).thenReturn('123');
+      when(() => mockCurrentUser.email).thenReturn('test@game.com');
+      when(() => mockCurrentUser.isAnonymous).thenReturn(false);
+
+      await repository.linkGoogleAccount();
+
+      verify(() => mockAuth.signOut()).called(1);
+      verify(() => mockAuth.signInWithCredential(any())).called(1);
+    });
+
+    test('should throw AuthFailure for other FirebaseAuthException', () async {
+      when(() => mockCurrentUser.linkWithCredential(any()))
+          .thenThrow(FirebaseAuthException(code: 'invalid-credential'));
+
+      await expectLater(
+        () => repository.linkGoogleAccount(),
+        throwsA(isA<AuthFailure>()),
+      );
+    });
+
+    test('should throw AuthFailure when no user is logged in', () async {
+      when(() => mockAuth.currentUser).thenReturn(null);
+
+      expect(
+        () => repository.linkGoogleAccount(),
+        throwsA(isA<AuthFailure>()),
+      );
     });
   });
 }
