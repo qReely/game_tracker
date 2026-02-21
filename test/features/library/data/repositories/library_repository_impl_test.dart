@@ -41,6 +41,10 @@ void main() {
     mockLocalDataSource = MockLibraryLocalDataSource();
     mockFirestore = MockFirebaseFirestore();
     mockAuthRepository = MockAuthRepository();
+    
+    // Stub authStateChanges as it's called in the constructor
+    when(() => mockAuthRepository.authStateChanges).thenAnswer((_) => const Stream.empty());
+
     repository = LibraryRepositoryImpl(
       mockLocalDataSource,
       mockFirestore,

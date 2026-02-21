@@ -7,12 +7,15 @@ abstract class LibraryRepository {
   Future<void> updatePrivateNote(int gameId, String note);
   Future<void> removeFromLibrary(int gameId);
   Future<void> updateUserRating(int gameId, double rating);
+  Future<void> updatePlaytime(int gameId, int minutes);
   Future<void> syncLocalToRemote();
+  Future<void> initializeSync();
 
 
   // Public/Social Actions
   Stream<List<LibraryItem>> getMyLibrary();
   Future<List<LibraryItem>> getUserLibrary(String userId);
+  Stream<Map<String, dynamic>?> getAverageRating(int gameId);
 
 
 }

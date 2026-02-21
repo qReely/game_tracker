@@ -29,3 +29,9 @@ class UpdatePrivateNote extends LibraryEvent {
   final String note;
   UpdatePrivateNote(this.gameId, this.note);
 }
+
+class UpdatePlaytime extends LibraryEvent {
+  final int gameId;
+  final int minutes;
+  UpdatePlaytime(this.gameId, this.minutes);
+}

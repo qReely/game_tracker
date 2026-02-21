@@ -2,13 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:game_tracker/core/error/failures.dart';
 import 'package:game_tracker/core/network/api_client.dart';
 import 'package:game_tracker/features/games/data/datasources/game_local_data_source.dart';
-import 'package:game_tracker/features/games/data/models/game_detail_model.dart';
 import 'package:game_tracker/features/games/data/models/local_game.dart';
-import 'package:game_tracker/features/games/domain/entities/filter_entity.dart';
-import 'package:game_tracker/features/games/domain/entities/game_detail_entity.dart';
 import 'package:game_tracker/features/games/domain/entities/game_entity.dart';
 import 'package:game_tracker/features/games/domain/game_repository.dart';
-import 'package:game_tracker/features/games/presentation/bloc/details/game_details_state.dart';
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_filter_state.dart';
 
 class GameRepositoryImpl implements GameRepository {
@@ -27,11 +23,19 @@ class GameRepositoryImpl implements GameRepository {
 
       final List results = response.data['results'];
       final List<LocalGame> localGames = results.map((json) {
+        final String? released = json['released'];
+        final String? year = released != null && released.isNotEmpty
+            ? released
+            .split('-')
+            .first
+            : null;
+
         return LocalGame()
           ..rawgId = json['id']
           ..name = json['name']
           ..backgroundImage = json['background_image']
-          ..rating = (json['rating'] as num).toDouble();
+          ..rating = (json['rating'] as num).toDouble()
+          ..releasedYear = year;
       }).toList();
 
       // Only cache the first page for offline fallback to save space
@@ -54,104 +58,86 @@ class GameRepositoryImpl implements GameRepository {
   }
 
   @override
-  Future<GameDetailEntity> getGameDetails(int id) async {
-    final cached = await _localDataSource.getGameDetail(id);
-    if (cached != null) {
-      return cached.toEntity();
-    }
-
+  Future<List<GameEntity>> getGameCalendar(int year, int month, int page,
+      {String ordering = '-released'}) async {
     try {
-      // 2. Parallel Fetch if not in cache
-      final results = await Future.wait([
-        _api.get('/games/$id'),
-        _api.get('/games/$id/screenshots'),
-      ]);
+      final response = await _api.get(
+        '/games/calendar/$year/$month',
+        queryParameters: {
+          'page': page,
+          'page_size': 20,
+          'ordering': ordering,
+          'popular': 'false',
+        },
+      );
 
-      final detailModel = GameDetailModel.fromJson(results[0].data, results[1].data);
-
-      await _localDataSource.cacheGameDetail(detailModel.toLocal());
-
-      return detailModel;
-    } catch (e) {
-      debugPrint(e.toString());
-      throw GameDetailsError(e.toString());
-    }
-  }
-
-  @override
-  Future<List<FilterEntity>> getFilterMetadata(String endpoint) async {
-    // 1. Define the cache key based on the endpoint
-    final String cacheKey = endpoint.replaceAll('/', '_');
-
-    // 2. Check if data exists in Isar (Safely)
-    List<FilterEntity> cachedData = [];
-    DateTime? lastUpdate;
-
-    try {
-      cachedData = await _localDataSource.getCachedMetadata(endpoint);
-      lastUpdate = await _localDataSource.getLastUpdated(cacheKey);
-    } catch (e) {
-      debugPrint('Cache read invalid: $e');
-      // Continue to fetch from network if cache fails
-    }
-
-    // 4. Define your TTL (e.g., 7 days for platforms/tags as they rarely change)
-    const Duration cacheTTL = Duration(days: 7);
-    final bool isCacheExpired = lastUpdate == null ||
-        DateTime.now().difference(lastUpdate) > cacheTTL;
-
-    // 5. If data exists and is NOT expired, return cached data immediately
-    if (cachedData.isNotEmpty && !isCacheExpired) {
-      return cachedData;
-    }
-
-    try {
-      // 6. Otherwise, fetch fresh data from API
-      final response = await _api.get('/$endpoint');
-      final List results = response.data['results'];
-      final freshData = results.map((json) => FilterEntity.fromJson(json)).toList();
-
-      // 7. Update Isar with fresh data and new timestamp
-      await _localDataSource.saveMetadata(endpoint, freshData);
-      await _localDataSource.updateCacheTimestamp(cacheKey);
-
-      return freshData;
-    } catch (e) {
-      // 8. Fallback: If API fails, return whatever we have in cache, even if expired
-      if (cachedData.isNotEmpty) return cachedData;
-      rethrow;
-    }
-  }
-
-  @override
-  Future<List<GameEntity>> getDiscoveryGames(DiscoveryFilterState filters, int page) async {
-    final queryParams = filters.toQueryParameters(page);
-
-    try {
-      final response = await _api.get('/games', queryParameters: queryParams);
       final List results = response.data['results'];
       final List<LocalGame> localGames = results.map((json) {
         return LocalGame()
           ..rawgId = json['id']
           ..name = json['name']
           ..backgroundImage = json['background_image']
-          ..rating = (json['rating'] as num).toDouble();
+          ..rating = (json['rating'] as num).toDouble()
+          ..releasedDate = json['released']
+          ..releasedYear = json['released'] != null &&
+              json['released'].isNotEmpty
+              ? json['released']
+              .split('-')
+              .first
+              : null;
       }).toList();
 
-      // Only cache the first page for offline fallback to save space
-      if (page == 1) {
-        await _localDataSource.cacheGames(localGames);
-      }
-      debugPrint("loaded games: ${results.length}");
       return localGames.map((e) => e.toEntity()).toList();
     } catch (e) {
-      // If we are on page 1 and network fails, show cache
-      if (page == 1) {
-        final cached = await _localDataSource.getGames();
-        return cached.map((e) => e.toEntity()).toList();
-      }
+      debugPrint("API Error in getGameCalendar: $e");
       rethrow;
     }
   }
 
+  @override
+  Future<List<GameEntity>> getGamesByCompany({
+    required String companySlug,
+    required bool isPublisher,
+    DiscoveryFilterState? filters,
+    int page = 1,
+  }) async {
+    try {
+      final Map<String, dynamic> queryParameters = {
+        isPublisher ? 'publishers' : 'developers': companySlug,
+        'page': page,
+        'page_size': 20,
+      };
+
+      if (filters != null) {
+        final filterParams = filters.toQueryParameters(page);
+        queryParameters.addAll(filterParams);
+        // Ensure the company filter is preserved and not overridden by filter state
+        queryParameters[isPublisher ? 'publishers' : 'developers'] =
+            companySlug;
+      }
+
+      final response = await _api.get(
+          '/games', queryParameters: queryParameters);
+
+      final List results = response.data['results'];
+      final List<LocalGame> localGames = results.map((json) {
+        return LocalGame()
+          ..rawgId = json['id']
+          ..name = json['name']
+          ..backgroundImage = json['background_image']
+          ..releasedYear = json['released'] != null &&
+              json['released'].isNotEmpty
+              ? json['released']
+              .split('-')
+              .first
+              : null
+          ..rating = (json['rating'] as num).toDouble();
+      }).toList();
+
+      return localGames.map((e) => e.toEntity()).toList();
+    } catch (e) {
+      debugPrint("API Error in getGamesByCompany: $e");
+      rethrow;
+    }
+  }
 }

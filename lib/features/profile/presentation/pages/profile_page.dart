@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:game_tracker/core/utils/image_cache_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_tracker/core/constants/app_icons.dart';
@@ -12,7 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:game_tracker/core/theme/app_colors.dart';
 import 'package:game_tracker/core/theme/dimens.dart';
-import 'package:game_tracker/core/utils/app_snackbar.dart';
+import 'package:game_tracker/core/presentation/widgets/app_snackbar.dart';
 import 'package:game_tracker/core/utils/ui_scaler.dart';
 
 import 'package:game_tracker/features/profile/presentation/bloc/profile_bloc.dart';
@@ -46,26 +47,7 @@ class ProfilePage extends StatelessWidget {
             actions: [
               IconButton(
                 icon: const Icon(AppIcons.settings),
-                onPressed: () => context.push('/settings'),
-              ),
-              BlocBuilder<ProfileBloc, ProfileState>(
-                builder: (context, state) {
-                  final user = sl<AuthRepository>().currentUser;
-                  final isAnonymous = user?.isAnonymous ?? false;
-                  if(isAnonymous) return SizedBox.shrink();
-                  return IconButton(
-                    icon: const Icon(AppIcons.logout),
-                    onPressed: () {
-                      AppBottomSheet.showWarning(
-                        context,
-                        title: "Sign Out",
-                        message: "Are you sure you want to sign out?",
-                        confirmText: "Sign Out",
-                        onConfirm: () => context.read<ProfileBloc>().add(SignOutRequested()),
-                      );
-                    },
-                  );
-                },
+                onPressed: () => context.push('/profile/settings'),
               ),
             ],
           ),
@@ -79,7 +61,7 @@ class ProfilePage extends StatelessWidget {
                       const SizedBox(height: 20),
                       _buildUserHeader(context),
                       const SizedBox(height: 32),
-                      _buildStatsGrid(libraryState.items),
+                      _buildStatsGrid(context, libraryState.items),
                       const SizedBox(height: 32),
                     ],
                   ),
@@ -102,16 +84,17 @@ class ProfilePage extends StatelessWidget {
         CircleAvatar(
           foregroundImage: isAnonymous ? null : CachedNetworkImageProvider(
             user?.photoUrl ?? "",
+            cacheManager: AppImageCacheManager.instance,
           ),
           backgroundColor: isAnonymous ? AppColors.surfaceLight : null,
           onForegroundImageError: isAnonymous ? null : (_, _) {},
           radius: 48,
-          child: isAnonymous ? const Icon(Icons.person_outline, size: 48, color: Colors.white54) : null,
+          child: isAnonymous ? Icon(AppIcons.profile, size: 48, color: AppColors.textSecondary) : null,
         ),
         const SizedBox(height: 16),
         Text(
           isAnonymous ? "Anonymous User" : "${user?.displayName}",
-          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
         if (isAnonymous) ...[
@@ -135,8 +118,8 @@ class ProfilePage extends StatelessWidget {
             label: const Text("Connect Google Account"),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.white,
-              side: const BorderSide(color: Colors.white24),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              side: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimens.radiusLg)),
             ),
           ),
         ] else
@@ -148,7 +131,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsGrid(List<LibraryItem> items) {
+  Widget _buildStatsGrid(BuildContext context, List<LibraryItem> items) {
     // Logic to calculate stats
     final int total = items.length;
     final int completed = items.where((i) => i.status == GameStatus.completed).length;
@@ -164,26 +147,26 @@ class ProfilePage extends StatelessWidget {
       crossAxisCount: 3,
       crossAxisSpacing: 12,
       children: [
-        _buildStatCard("GAMES", total.toString(), Colors.blueAccent),
-        _buildStatCard("BEATEN", completed.toString(), Colors.greenAccent),
-        _buildStatCard("RATING", avgRating.toStringAsFixed(1), Colors.amberAccent),
+        _buildStatCard(context, "GAMES", total.toString(), Colors.blueAccent),
+        _buildStatCard(context, "BEATEN", completed.toString(), Colors.greenAccent),
+        _buildStatCard(context, "RATING", avgRating.toStringAsFixed(1), Colors.amberAccent),
       ],
     );
   }
 
-  Widget _buildStatCard(String label, String value, Color color) {
+  Widget _buildStatCard(BuildContext context, String label, String value, Color color) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1F2430),
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(Dimens.radiusLg),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value, style: TextStyle(color: color, fontSize: 22, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(value, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: color, fontWeight: FontWeight.bold)),
+          SizedBox(height: Dimens.xs),
+          Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.textTertiary, fontWeight: FontWeight.bold)),
         ],
       ),
     );

@@ -8,6 +8,8 @@ class Dimens {
   static const double xl = 32.0;
   static const double xxl = 48.0;
 
+  static const double sheetMaxWidth = 600.0;
+
   // Border Radius
   static const double radiusXs = 4.0;
   static const double radiusSm = 8.0;

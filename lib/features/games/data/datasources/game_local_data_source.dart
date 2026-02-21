@@ -1,6 +1,6 @@
 import 'package:game_tracker/core/cache/cache_metadata.dart';
 import 'package:game_tracker/features/games/data/models/local_game.dart';
-import 'package:game_tracker/features/games/data/models/local_game_detail.dart';
+import 'package:game_tracker/features/game_details/data/models/local_game_detail.dart';
 import 'package:isar_community/isar.dart';
 import 'package:game_tracker/features/games/data/models/local_filter.dart';
 import 'package:game_tracker/features/games/domain/entities/filter_entity.dart';

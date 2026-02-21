@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:game_tracker/core/theme/app_colors.dart';
-import 'package:game_tracker/core/constants/app_icons.dart';
 import 'package:game_tracker/core/theme/dimens.dart';
 import 'package:game_tracker/core/utils/ui_scaler.dart';
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_bloc.dart';
@@ -9,8 +8,11 @@ import 'package:game_tracker/features/games/presentation/bloc/discovery/discover
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_filter_cubit.dart';
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_filter_state.dart';
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_state.dart';
-import 'package:game_tracker/features/games/presentation/widgets/card/game_card.dart';
+import 'package:game_tracker/core/widgets/app_search_bar.dart';
+import 'dart:async';
+import 'package:game_tracker/features/games/presentation/widgets/card/game_grid.dart';
 import 'package:game_tracker/features/games/presentation/widgets/discovery/discovery_filter_sheet.dart';
+import 'package:game_tracker/features/games/presentation/widgets/discovery/discovery_quick_filters.dart';
 
 class DiscoveryPage extends StatefulWidget {
   const DiscoveryPage({super.key});
@@ -19,11 +21,16 @@ class DiscoveryPage extends StatefulWidget {
   State<DiscoveryPage> createState() => _DiscoveryPageState();
 }
 
-class _DiscoveryPageState extends State<DiscoveryPage> {
+class _DiscoveryPageState extends State<DiscoveryPage> with AutomaticKeepAliveClientMixin {
   final ScrollController _scrollController = ScrollController();
+  Timer? _debounce;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
+// ...
     super.initState();
     _scrollController.addListener(_onScroll);
   }
@@ -37,74 +44,71 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
   @override
   void dispose() {
     _scrollController.dispose();
+    _debounce?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      context.read<DiscoveryFilterCubit>().setSearch(query);
+      context.read<DiscoveryBloc>().add(RefreshDiscovery());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text("Discover Games"),
-        actions: [
+      ),
+      body: Column(
+        children: [
           BlocBuilder<DiscoveryFilterCubit, DiscoveryFilterState>(
-            builder: (context, state) {
-              return IconButton(
-                icon: Badge(
-                  isLabelVisible: state.activeFilterCount > 0,
-                  label: Text('${state.activeFilterCount}'),
-                  child: const Icon(AppIcons.filter),
-                ),
-                onPressed: () => _showFilterSheet(context),
+            builder: (context, filterState) {
+              return AppSearchBar(
+                hintText: "Find your next adventure...",
+                initialValue: filterState.searchQuery,
+                activeFilterCount: filterState.activeFilterCount,
+                onChanged: _onSearchChanged,
+                onFilterPressed: () => _showFilterSheet(context),
               );
             },
-          )
-        ],
-      ),
-      body: BlocBuilder<DiscoveryBloc, DiscoveryState>(
-        builder: (context, state) {
-          if (state is DiscoveryInitial) {
-            context.read<DiscoveryBloc>().add(RefreshDiscovery());
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-          }
-          if (state is DiscoveryLoading) {
-            return Column(
-              children: [
-                _buildFilterSummary(context),
-                const Expanded(child: Center(child: CircularProgressIndicator(color: AppColors.primary))),
-              ],
-            );
-          }
+          ),
+          const DiscoveryQuickFilters(), // Added Quick Filters
+          _buildFilterSummary(context),
+          Expanded(
+            child: BlocBuilder<DiscoveryBloc, DiscoveryState>(
+              builder: (context, state) {
+                if (state is DiscoveryInitial || state is DiscoveryLoading) {
+                  return const GameGrid(games: [], isLoading: true);
+                }
 
-          if (state is DiscoveryLoaded) {
-            return Column(
-              children: [
-                _buildFilterSummary(context),
-                Expanded(
-                  child: GridView.builder(
+                if (state is DiscoveryLoaded) {
+                  if (state.games.isEmpty) {
+                    return const Center(child: Text("No games found with these filters"));
+                  }
+                  return SingleChildScrollView(
                     controller: _scrollController,
-                    padding: EdgeInsets.all(Dimens.md.w),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: Dimens.md.w,
-                      mainAxisSpacing: Dimens.md.h,
+                    child: Column(
+                      children: [
+                        GameGrid(games: state.games),
+                        if (!state.hasReachedMax)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
+                            child: CircularProgressIndicator(color: AppColors.primary),
+                          ),
+                      ],
                     ),
-                    itemCount: state.hasReachedMax ? state.games.length : state.games.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index >= state.games.length) {
-                        return const Center(child: CircularProgressIndicator(color: AppColors.primary));
-                      }
-                      final game = state.games[index];
-                      return GameCard(game: game);
-                    },
-                  ),
-                ),
-              ],
-            );
-          }
-          return const Center(child: Text("No games found with these filters"));
-        },
+                  );
+                }
+                return const Center(child: Text("An error occurred. Please try again."));
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -116,6 +120,7 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
 
         final parts = <String>[];
         if (state.platform != null) parts.add(state.platform!.name);
+        if (state.genres.isNotEmpty) parts.add(state.genres.map((e) => e.name).join(", "));
         if (state.tags.isNotEmpty) parts.add(state.tags.map((e) => e.name).join(", "));
         
         String summary = "Games";
@@ -149,7 +154,8 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
       isScrollControlled: true,
       useSafeArea: true,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.6,
+        maxWidth: Dimens.sheetMaxWidth,
+        maxHeight: MediaQuery.of(context).size.height * 0.7,
       ),
       builder: (context) {
         return MultiBlocProvider(
@@ -157,7 +163,9 @@ class _DiscoveryPageState extends State<DiscoveryPage> {
             BlocProvider.value(value: filterCubit),
             BlocProvider.value(value: discoveryBloc),
           ],
-          child: DiscoveryFilterSheet(),
+          child: DiscoveryFilterSheet(
+            onApply: () => discoveryBloc.add(RefreshDiscovery()),
+          ),
         );
       },
     );

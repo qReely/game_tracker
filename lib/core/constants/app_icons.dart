@@ -5,6 +5,7 @@ class AppIcons {
   static const IconData home = Icons.home_rounded;
   static const IconData discovery = Icons.explore_rounded;
   static const IconData library = Icons.library_books_rounded;
+  static const IconData schedule = Icons.calendar_month;
   static const IconData profile = Icons.person_rounded;
   static const IconData back = Icons.arrow_back_rounded;
   static const IconData close = Icons.close_rounded;
@@ -21,9 +22,16 @@ class AppIcons {
   static const IconData settings = Icons.settings_rounded;
   static const IconData favorite = Icons.favorite_rounded;
   static const IconData favoriteBorder = Icons.favorite_border_rounded;
-  
+  static const IconData note = Icons.note_alt_rounded;
+  static const IconData noteAdd = Icons.note_add_rounded;
+  static const IconData notificationAdd = Icons.notification_add;
+  static const IconData notificationRemove = Icons.notifications_off;
+  static const IconData addToLibrary = Icons.library_add_rounded;
+
+
   // Game Related
   static const IconData star = Icons.star_rounded;
+  static const IconData starOutline = Icons.star_border_outlined;
   static const IconData calendar = Icons.calendar_today_rounded;
   static const IconData gamepad = Icons.gamepad_rounded;
   static const IconData trophy = Icons.emoji_events_rounded;
@@ -41,4 +49,6 @@ class AppIcons {
   static const IconData check = Icons.check_rounded;
   static const IconData error = Icons.error_outline_rounded;
   static const IconData info = Icons.info_outline_rounded;
+  static const IconData openInNew = Icons.open_in_new_rounded;
+
 }

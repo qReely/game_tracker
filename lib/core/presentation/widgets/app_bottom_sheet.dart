@@ -40,7 +40,9 @@ class AppBottomSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: Dimens.sheetMaxWidth),
       builder: (_) => AppBottomSheet(
         title: title,
         message: message,
@@ -63,7 +65,9 @@ class AppBottomSheet extends StatelessWidget {
   }) {
     return showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: Dimens.sheetMaxWidth),
       builder: (_) => AppBottomSheet(
         title: title,
         message: message,
@@ -85,7 +89,9 @@ class AppBottomSheet extends StatelessWidget {
       }) {
     return showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: Dimens.sheetMaxWidth),
       builder: (_) => AppBottomSheet(
         title: title,
         message: message,
@@ -162,11 +168,11 @@ class AppBottomSheet extends StatelessWidget {
                 border: isWarning ? Border.all(color: AppColors.warning.withValues(alpha: 0.3)) : null,
               ),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Icon(
-                    isWarning ? Icons.warning_amber_rounded : Icons.info_outline, 
-                    color: isWarning ? AppColors.warning : Colors.white70, 
+                    isWarning ? Icons.warning_amber_rounded : Icons.info_outline,
+                    color: isWarning ? AppColors.warning : Colors.white70,
                     size: 24.sp
                   ),
                   SizedBox(width: Dimens.sm.w),

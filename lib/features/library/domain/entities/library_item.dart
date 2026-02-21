@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
 
-enum GameStatus { backlog, playing, completed, dropped, wishlist }
+enum GameStatus { playing, backlog, completed, wishlist, dropped, none }
 
 extension GameIcons on GameStatus{
   Color get color {
@@ -11,6 +11,7 @@ extension GameIcons on GameStatus{
       case GameStatus.backlog: return Colors.orange;
       case GameStatus.wishlist: return Colors.pink;
       case GameStatus.dropped: return Colors.red;
+      case GameStatus.none: return Colors.transparent;
     }
   }
 
@@ -21,6 +22,18 @@ extension GameIcons on GameStatus{
       case GameStatus.backlog: return Icon(Icons.inventory_2, color: color);
       case GameStatus.wishlist: return Icon(Icons.favorite, color: color);
       case GameStatus.dropped: return Icon(Icons.delete_forever, color: color);
+      case GameStatus.none: return Icon(Icons.help_outline, color: color);
+    }
+  }
+
+  String get description {
+    switch (this) {
+      case GameStatus.playing: return "Currently enjoying";
+      case GameStatus.completed: return "Finished the game";
+      case GameStatus.backlog: return "Plan to play";
+      case GameStatus.wishlist: return "Want to buy";
+      case GameStatus.dropped: return "Stopped playing";
+      case GameStatus.none: return "Not in library";
     }
   }
 }
@@ -32,6 +45,9 @@ class LibraryItem extends Equatable {
   final GameStatus status;
   final double? userRating; // 1-5 stars
   final String? privateNote; // The "Self Note"
+  final List<String>? platforms;
+  final String? releasedYear;
+  final int? playtimeMinutes;
   final DateTime addedAt;
 
   const LibraryItem({
@@ -41,6 +57,9 @@ class LibraryItem extends Equatable {
     required this.status,
     this.userRating,
     this.privateNote,
+    this.platforms,
+    this.releasedYear,
+    this.playtimeMinutes,
     required this.addedAt,
   });
 
@@ -52,6 +71,9 @@ class LibraryItem extends Equatable {
     status,
     userRating,
     privateNote,
+    platforms,
+    releasedYear,
+    playtimeMinutes,
     addedAt,
   ];
 }

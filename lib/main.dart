@@ -10,10 +10,17 @@ import 'package:game_tracker/features/library/presentation/bloc/library_event.da
 import 'package:game_tracker/core/theme/app_theme.dart';
 import 'package:game_tracker/core/utils/ui_scaler.dart';
 
+import 'package:flutter/services.dart';
+
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

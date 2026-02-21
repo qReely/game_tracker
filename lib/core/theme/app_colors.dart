@@ -15,6 +15,7 @@ class AppColors {
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB3B3B3);
   static const Color textTertiary = Color(0xFF757575);
+  static const Color textPrimaryInverse = Color(0xFF000000);
 
   // Status
   static const Color success = Color(0xFF00C851);

@@ -19,6 +19,9 @@ class LocalLibraryItem {
 
   double? userRating;
   String? privateNote;
+  List<String>? platforms;
+  String? releasedYear;
+  int? playtimeMinutes;
   late DateTime addedAt;
 
   LibraryItem toEntity() {
@@ -29,6 +32,9 @@ class LocalLibraryItem {
       status: status,
       userRating: userRating,
       privateNote: privateNote,
+      platforms: platforms,
+      releasedYear: releasedYear,
+      playtimeMinutes: playtimeMinutes,
       addedAt: addedAt,
     );
   }
@@ -41,6 +47,9 @@ class LocalLibraryItem {
       ..status = entity.status
       ..userRating = entity.userRating
       ..privateNote = entity.privateNote
+      ..platforms = entity.platforms
+      ..releasedYear = entity.releasedYear
+      ..playtimeMinutes = entity.playtimeMinutes
       ..addedAt = entity.addedAt;
   }
 }

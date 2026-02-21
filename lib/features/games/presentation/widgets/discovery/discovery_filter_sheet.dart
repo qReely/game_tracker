@@ -5,16 +5,23 @@ import 'package:game_tracker/core/theme/app_colors.dart';
 import 'package:game_tracker/core/theme/dimens.dart';
 import 'package:game_tracker/core/utils/ui_scaler.dart';
 import 'package:game_tracker/features/games/domain/entities/game_ordering.dart';
-import 'package:game_tracker/features/games/domain/game_repository.dart';
-import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_bloc.dart';
-import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_event.dart';
+import 'package:game_tracker/features/games/domain/repositories/discovery_repository.dart';
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_filter_cubit.dart';
 import 'package:game_tracker/features/games/presentation/bloc/discovery/discovery_filter_state.dart';
 
 class DiscoveryFilterSheet extends StatelessWidget {
-  const DiscoveryFilterSheet({super.key});
+  /// Callback to be called when the "Apply" button is pressed.
+  final VoidCallback onApply;
 
-  @override
+  /// Whether to show the genres section.
+  final bool showGenres;
+
+  const DiscoveryFilterSheet({
+    super.key, 
+    required this.onApply,
+    this.showGenres = true,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -43,12 +50,18 @@ class DiscoveryFilterSheet extends StatelessWidget {
                    SizedBox(height: Dimens.xl.h),
                    Text("Platform", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                    SizedBox(height: Dimens.md.h),
-                   _buildDynamicSection('platforms/lists/parents', (cubit, e) => cubit.setPlatform(e)),
+                   _buildDynamicSection('platforms/lists/parents', (cubit, e) => cubit.setPlatform(e), category: 'platform', maxItems: 12),
                    SizedBox(height: Dimens.xl.h),
                    Text("Popular Tags", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                    SizedBox(height: Dimens.md.h),
-                   _buildDynamicSection('tags', (cubit, e) => cubit.toggleTag(e)),
-                   SizedBox(height: Dimens.xxl.h),
+                   _buildDynamicSection('tags', (cubit, e) => cubit.toggleTag(e), category: 'tag', maxItems: 12),
+                   SizedBox(height: Dimens.xl.h),
+                   if (showGenres) ...[
+                     Text("Genres", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                     SizedBox(height: Dimens.md.h),
+                     _buildDynamicSection('genres', (cubit, e) => cubit.setGenre(e), category: 'genre'),
+                     SizedBox(height: Dimens.xxl.h),
+                   ],
                 ],
               ),
             ),
@@ -77,8 +90,8 @@ class DiscoveryFilterSheet extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("${start.toInt()}", style: const TextStyle(color: Colors.white70)),
-                Text("${end.toInt()}", style: const TextStyle(color: Colors.white70)),
+                Text("${start.toInt()}", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+                Text("${end.toInt()}", style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
               ],
             ),
             RangeSlider(
@@ -88,7 +101,7 @@ class DiscoveryFilterSheet extends StatelessWidget {
               divisions: (max - min).toInt(),
               labels: RangeLabels("${start.toInt()}", "${end.toInt()}"),
               activeColor: AppColors.primary,
-              inactiveColor: Colors.white24,
+              inactiveColor: AppColors.textSecondary.withValues(alpha: 0.2),
               onChanged: (values) {
                 context.read<DiscoveryFilterCubit>().setYearRange(
                   values.start.toInt(), 
@@ -106,6 +119,7 @@ class DiscoveryFilterSheet extends StatelessWidget {
     return BlocBuilder<DiscoveryFilterCubit, DiscoveryFilterState>(
       builder: (context, state) {
         return Wrap(
+          runSpacing: Dimens.sm.h,
           spacing: Dimens.sm.w,
           children: GameOrdering.values.map((order) => ChoiceChip(
             label: Text(order.label),
@@ -117,19 +131,31 @@ class DiscoveryFilterSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDynamicSection(String endpoint, Function(DiscoveryFilterCubit, dynamic) onSelect) {
+  Widget _buildDynamicSection(String endpoint, Function(DiscoveryFilterCubit, dynamic) onSelect, {required String category, int? maxItems}) {
     return FutureBuilder(
-      future: sl<GameRepository>().getFilterMetadata(endpoint),
+      future: sl<DiscoveryRepository>().getFilterMetadata(endpoint),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final items = snapshot.data!.take(8).toList();
+        var items = snapshot.data!;
+        if (maxItems != null) {
+          items = items.take(maxItems).toList();
+        }
 
         return BlocBuilder<DiscoveryFilterCubit, DiscoveryFilterState>(
           builder: (context, state) {
             return Wrap(
+              runSpacing: Dimens.sm.h,
               spacing: Dimens.sm.w,
               children: items.map((item) {
-                final isSelected = state.platform?.id == item.id || state.tags.any((t) => t.id == item.id);
+                bool isSelected = false;
+                if (category == 'platform') {
+                  isSelected = state.platform?.id == item.id;
+                } else if (category == 'tag') {
+                  isSelected = state.tags.any((t) => t.id == item.id);
+                } else if (category == 'genre') {
+                  isSelected = state.genres.any((g) => g.id == item.id) || state.genreSlug == item.slug;
+                }
+
                 return FilterChip(
                   label: Text(item.name),
                   selected: isSelected,
@@ -151,7 +177,7 @@ class DiscoveryFilterSheet extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimens.radiusLg.r)),
       ),
       onPressed: () {
-        context.read<DiscoveryBloc>().add(RefreshDiscovery());
+        onApply();
         Navigator.pop(context);
       },
       child: Text("SHOW RESULTS", style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 16)),

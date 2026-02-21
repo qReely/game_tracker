@@ -30,6 +30,10 @@ class MainScaffold extends StatelessWidget {
             label: 'Library',
           ),
           NavigationDestination(
+            icon: Icon(AppIcons.schedule),
+            label: 'Schedule',
+          ),
+          NavigationDestination(
             icon: Icon(AppIcons.profile),
             label: 'Profile',
           ),

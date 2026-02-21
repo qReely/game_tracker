@@ -19,8 +19,8 @@ class UiScaler {
     _scaleHeight = _screenHeight / designSize.height;
   }
 
-  static double setWidth(num width) => width * _scaleWidth;
-  static double setHeight(num height) => height * _scaleHeight;
+  static double setWidth(num width) => width * min(_scaleWidth, _scaleHeight);
+  static double setHeight(num height) => height * min(_scaleWidth, _scaleHeight);
   static double setRadius(num r) => r * min(_scaleWidth, _scaleHeight);
   
   static double setSp(num fontSize) {

@@ -1,11 +1,11 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:game_tracker/features/games/domain/game_repository.dart';
+import 'package:game_tracker/features/games/domain/repositories/discovery_repository.dart';
 import 'discovery_event.dart';
 import 'discovery_state.dart';
 import 'discovery_filter_cubit.dart';
 
 class DiscoveryBloc extends Bloc<DiscoveryEvent, DiscoveryState> {
-  final GameRepository repository;
+  final DiscoveryRepository repository;
   final DiscoveryFilterCubit filterCubit;
   int _currentPage = 1;
   bool _isFetching = false;

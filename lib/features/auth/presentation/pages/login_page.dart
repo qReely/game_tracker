@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:game_tracker/core/utils/app_snackbar.dart';
+import 'package:game_tracker/core/presentation/widgets/app_snackbar.dart';
 import 'package:game_tracker/core/theme/app_colors.dart';
 import 'package:game_tracker/core/constants/app_icons.dart';
 import 'package:game_tracker/core/theme/dimens.dart';
@@ -63,12 +63,12 @@ class LoginPage extends StatelessWidget {
                     onPressed: () {
                       context.read<LoginBloc>().add(GoogleSignInRequested());
                     },
-                    icon: const Icon(AppIcons.google, color: Colors.black),
-                    label: Text("Sign in with Google", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black)),
+                    icon: const Icon(AppIcons.google, color: AppColors.textPrimaryInverse),
+                    label: Text("Sign in with Google", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppColors.textPrimaryInverse)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
+                      backgroundColor: AppColors.textPrimary,
                       padding: EdgeInsets.symmetric(horizontal: Dimens.xl.w, vertical: Dimens.md.h),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(Dimens.radiusCircular)),
                     ),
                   );
                 },
@@ -81,7 +81,7 @@ class LoginPage extends StatelessWidget {
                 child: Text(
                   "Continue as Guest",
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white70,
+                    color: AppColors.textSecondary,
                     decoration: TextDecoration.underline,
                   ),
                 ),

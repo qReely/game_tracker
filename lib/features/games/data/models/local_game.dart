@@ -14,7 +14,16 @@ class LocalGame {
   late String name;
   String? backgroundImage;
   late double rating;
+  String? releasedYear;
+  String? releasedDate;
 
   // Converter to Domain Entity
-  GameEntity toEntity() => GameEntity(id: rawgId, name: name, backgroundImage: backgroundImage, rating: rating);
+  GameEntity toEntity() => GameEntity(
+        id: rawgId,
+        name: name,
+        backgroundImage: backgroundImage,
+        rating: rating,
+        releasedYear: releasedYear,
+        releasedDate: releasedDate,
+      );
 }

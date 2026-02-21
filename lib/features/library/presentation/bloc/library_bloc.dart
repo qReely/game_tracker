@@ -13,7 +13,7 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
       // Listen to the stream of items (Isar handles real-time updates)
       await emit.forEach<List<LibraryItem>>(
         _repository.getMyLibrary(),
-        onData: (items) => LibraryLoaded(items),
+        onData: (items) => LibraryLoaded(List<LibraryItem>.from(items)),
       );
     });
 
@@ -35,6 +35,10 @@ class LibraryBloc extends Bloc<LibraryEvent, LibraryState> {
 
     on<UpdatePrivateNote>((event, emit) async {
       await _repository.updatePrivateNote(event.gameId, event.note);
+    });
+
+    on<UpdatePlaytime>((event, emit) async {
+      await _repository.updatePlaytime(event.gameId, event.minutes);
     });
   }
 }
